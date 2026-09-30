@@ -1,77 +1,80 @@
 malmotvatt.com - DMARC update (step 2 of 2)
-Prepared 30 September 2026
+Updated 30 September 2026 - matches the expanded value cPanel is now showing
 
-WHAT TO CHANGE
+
+BACKGROUND
+----------
+cPanel's DMARC editor has rewritten the record in its long form. It spells
+out all the settings that were previously left at their defaults. It means
+exactly the same thing as before - nothing has actually changed.
+
+The value currently in the box is:
+
+v=DMARC1;p=none;sp=none;adkim=r;aspf=r;pct=100;fo=1;rf=afrf;ri=86400;rua=mailto:8071c18c@mxtoolbox.dmarc-report.com;ruf=mailto:8071c18c@forensics.dmarc-report.com
+
+
+WHAT TO CHANGE - TWO WORDS
+--------------------------
+Do NOT replace the whole line. Change only these two words:
+
+  p=none    ->  p=quarantine
+  sp=none   ->  sp=quarantine
+
+Leave every other part exactly as it is.
+
+
+THE FINISHED VALUE (for checking your work only - do not retype it)
+-------------------------------------------------------------------
+
+v=DMARC1;p=quarantine;sp=quarantine;adkim=r;aspf=r;pct=100;fo=1;rf=afrf;ri=86400;rua=mailto:8071c18c@mxtoolbox.dmarc-report.com;ruf=mailto:8071c18c@forensics.dmarc-report.com
+
+
+WHAT THE TWO WORDS MEAN
+-----------------------
+p   = the policy for malmotvatt.com itself
+sp  = the policy for any subdomain of it (news.malmotvatt.com,
+      new.malmotvatt.com, and so on)
+
+  none        = "report fakes to me, but deliver them anyway"  (no protection)
+  quarantine  = "put fakes in the recipient's spam folder"
+
+sp is worth changing too. If you set p only, your main domain is protected
+but anyone can still forge mail from anything.malmotvatt.com and it lands in
+the inbox. Nothing of yours sends mail from a subdomain - the website forms
+send as info@malmotvatt.com, and Fortnox sends under fortnox.se - so there is
+nothing that can break.
+
+
+THE REST OF THE LINE, IN CASE YOU WONDER WHAT IT IS
+---------------------------------------------------
+  adkim=r   relaxed DKIM alignment - the normal setting
+  aspf=r    relaxed SPF alignment - the normal setting
+  pct=100   apply the policy to 100% of mail
+  fo=1      send a forensic report if either check fails
+  rf=afrf   the report format
+  ri=86400  send the summary report once every 24 hours
+  rua=      where the daily summary reports go
+  ruf=      where the forensic reports go
+
+All of these are defaults or were already in your old record. None of them
+need touching.
+
+
+BEFORE YOU SAVE - THE DUPLICATE
+-------------------------------
+There were TWO _dmarc rows in your zone. Make sure only ONE is left before
+you save the change. Two records that say different things = DMARC ignores
+both, and you end up with no policy at all while everything still looks fine.
+
+
+AFTER YOU SAVE
 --------------
-cPanel > Zone Editor > malmotvatt.com > find the existing TXT record
-on the name "_dmarc" and EDIT it (do not add a second one - there
-must only ever be one _dmarc record).
+1. Reload the Zone Editor and confirm there is exactly one _dmarc row,
+   showing p=quarantine.
+2. Message me. I'll query it from outside and confirm what the world sees.
+3. Then send a normal mail from info@malmotvatt.com to a Gmail address and
+   to an Outlook/Hotmail address, and submit the website contact form once.
+   All three should behave exactly as they do today.
 
-CURRENT VALUE (this is what is live right now - monitor only):
-
-v=DMARC1; p=none; rua=mailto:8071c18c@mxtoolbox.dmarc-report.com; ruf=mailto:8071c18c@forensics.dmarc-report.com; fo=1
-
-
-NEW VALUE (copy the single line below, exactly, nothing added):
-
-v=DMARC1; p=quarantine; pct=100; rua=mailto:8071c18c@mxtoolbox.dmarc-report.com; ruf=mailto:8071c18c@forensics.dmarc-report.com; fo=1
-
-
-RECORD SETTINGS
----------------
-Name / Host : _dmarc          (cPanel may show it as _dmarc.malmotvatt.com - that is fine)
-Type        : TXT
-TTL         : 3600
-Value       : the NEW VALUE line above
-
-
-WHAT ACTUALLY CHANGES
----------------------
-Only one word: p=none becomes p=quarantine.
-
-  p=none       = "tell me about fakes, but deliver them anyway"
-  p=quarantine = "put fakes in the recipient's spam folder"
-
-Everything else in the line stays identical so your MXToolbox reports
-keep arriving at the same address.
-
-
-WHY IT IS SAFE TO DO THIS NOW
------------------------------
-I re-checked your DNS today before writing this:
-
-  SPF   v=spf1 include:_spf.google.com include:_spf.reliablemail.org
-        ip4:185.76.64.165 ~all        -> valid, one record, covers
-                                         Google + your web host
-  DKIM  google._domainkey             -> present, 2048-bit key
-  DMARC _dmarc                        -> present, currently p=none
-
-Your real mail all leaves through Google:
-  - staff mail from Gmail / Google Workspace
-  - the website contact forms, which go out through WP Mail SMTP using
-    the Google connection as info@malmotvatt.com
-
-Both of those sign with your DKIM key and line up with your domain, so
-they pass DMARC today and will keep passing after this change. The only
-mail this affects is mail that FAILS both checks - i.e. somebody
-forging your address.
-
-
-AFTER YOU SAVE IT
------------------
-1. Wait about an hour for DNS to update.
-2. Send a normal mail from info@malmotvatt.com to a Gmail address and
-   to an Outlook/Hotmail address. Both should land in the inbox as
-   usual. If either one lands in spam, tell me straight away and I will
-   put it back to p=none in minutes - it is a one-word revert.
-3. Submit the website contact form once and confirm the mail arrives.
-
-Tell me when it is saved and I will re-query it from outside and
-confirm it is live.
-
-
-NOT AFFECTED BY THIS
---------------------
-Your outreach from the free Gmail account (mattvattmalmo@gmail.com).
-That sends under gmail.com, not under malmotvatt.com, so this record
-does not touch it at all.
+If anything looks wrong, it is one word back to none. Nothing here is
+permanent.
