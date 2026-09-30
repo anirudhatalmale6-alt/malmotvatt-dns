@@ -1,0 +1,77 @@
+malmotvatt.com - DMARC update (step 2 of 2)
+Prepared 30 September 2026
+
+WHAT TO CHANGE
+--------------
+cPanel > Zone Editor > malmotvatt.com > find the existing TXT record
+on the name "_dmarc" and EDIT it (do not add a second one - there
+must only ever be one _dmarc record).
+
+CURRENT VALUE (this is what is live right now - monitor only):
+
+v=DMARC1; p=none; rua=mailto:8071c18c@mxtoolbox.dmarc-report.com; ruf=mailto:8071c18c@forensics.dmarc-report.com; fo=1
+
+
+NEW VALUE (copy the single line below, exactly, nothing added):
+
+v=DMARC1; p=quarantine; pct=100; rua=mailto:8071c18c@mxtoolbox.dmarc-report.com; ruf=mailto:8071c18c@forensics.dmarc-report.com; fo=1
+
+
+RECORD SETTINGS
+---------------
+Name / Host : _dmarc          (cPanel may show it as _dmarc.malmotvatt.com - that is fine)
+Type        : TXT
+TTL         : 3600
+Value       : the NEW VALUE line above
+
+
+WHAT ACTUALLY CHANGES
+---------------------
+Only one word: p=none becomes p=quarantine.
+
+  p=none       = "tell me about fakes, but deliver them anyway"
+  p=quarantine = "put fakes in the recipient's spam folder"
+
+Everything else in the line stays identical so your MXToolbox reports
+keep arriving at the same address.
+
+
+WHY IT IS SAFE TO DO THIS NOW
+-----------------------------
+I re-checked your DNS today before writing this:
+
+  SPF   v=spf1 include:_spf.google.com include:_spf.reliablemail.org
+        ip4:185.76.64.165 ~all        -> valid, one record, covers
+                                         Google + your web host
+  DKIM  google._domainkey             -> present, 2048-bit key
+  DMARC _dmarc                        -> present, currently p=none
+
+Your real mail all leaves through Google:
+  - staff mail from Gmail / Google Workspace
+  - the website contact forms, which go out through WP Mail SMTP using
+    the Google connection as info@malmotvatt.com
+
+Both of those sign with your DKIM key and line up with your domain, so
+they pass DMARC today and will keep passing after this change. The only
+mail this affects is mail that FAILS both checks - i.e. somebody
+forging your address.
+
+
+AFTER YOU SAVE IT
+-----------------
+1. Wait about an hour for DNS to update.
+2. Send a normal mail from info@malmotvatt.com to a Gmail address and
+   to an Outlook/Hotmail address. Both should land in the inbox as
+   usual. If either one lands in spam, tell me straight away and I will
+   put it back to p=none in minutes - it is a one-word revert.
+3. Submit the website contact form once and confirm the mail arrives.
+
+Tell me when it is saved and I will re-query it from outside and
+confirm it is live.
+
+
+NOT AFFECTED BY THIS
+--------------------
+Your outreach from the free Gmail account (mattvattmalmo@gmail.com).
+That sends under gmail.com, not under malmotvatt.com, so this record
+does not touch it at all.
